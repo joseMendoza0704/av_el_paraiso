@@ -1,15 +1,38 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Helpers de rol — la fuente de verdad es la colección /usuarios/{email}
+    function rolDe(correo) {
+      return get(/databases/$(database)/documents/usuarios/$(correo)).data.rol;
+    }
+
+    function esAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.token.email))
+        && rolDe(request.auth.token.email) == 'admin';
+    }
+
+    function esUsuarioRegistrado() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.token.email));
+    }
+
     match /canciones/{cancionId} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null
+      allow read: if esUsuarioRegistrado();
+      allow create, update: if esAdmin()
         && request.resource.data.titulo is string
         && request.resource.data.titulo.size() > 0
         && request.resource.data.autor is string
         && request.resource.data.autor.size() > 0
         && request.resource.data.categoriaLiturgica in ['Alabanza', 'Adoración'];
-      allow delete: if request.auth != null;
+      allow delete: if esAdmin();
+    }
+
+    // Los roles se asignan a mano desde la consola de Firebase — nunca desde la app
+    match /usuarios/{correo} {
+      allow read: if request.auth != null && request.auth.token.email == correo;
+      allow write: if false;
     }
   }
 }

@@ -117,6 +117,8 @@ export async function crearCancion(datos, archivos) {
     autor: datos.autor.trim(),
     enlaceYoutube: datos.enlaceYoutube?.trim() || '',
     categoriaLiturgica: datos.categoriaLiturgica,
+    tonalidad: datos.tonalidad?.trim() || '',
+    bpm: datos.bpm || '',
     vecesTocada: 0,
     urlPdfLetra: null,
     urlMp3Secuencia: null,
@@ -176,13 +178,11 @@ export async function actualizarCancion(id, datos, archivosNuevos, archivosAElim
   if (datos.autor !== undefined) actualizacion.autor = datos.autor.trim()
   if (datos.enlaceYoutube !== undefined) actualizacion.enlaceYoutube = datos.enlaceYoutube?.trim() || ''
   if (datos.categoriaLiturgica !== undefined) actualizacion.categoriaLiturgica = datos.categoriaLiturgica
+  if (datos.tonalidad !== undefined) actualizacion.tonalidad = datos.tonalidad?.trim() || ''
+  if (datos.bpm !== undefined) actualizacion.bpm = datos.bpm
 
   for (const [campo, url] of Object.entries(urlsSubidas)) {
-    if (campo.startsWith('letras.')) {
-      actualizacion[campo] = url
-    } else {
-      actualizacion[campo] = url
-    }
+    actualizacion[campo] = url
   }
 
   await updateDoc(doc(db, 'canciones', id), actualizacion)
@@ -220,6 +220,8 @@ export async function eliminarCancion(id) {
 export async function incrementarVecesTocada(id) {
   await updateDoc(doc(db, 'canciones', id), {
     vecesTocada: increment(1),
+    ultimaVezTocada: serverTimestamp(),
     actualizadoEn: serverTimestamp(),
   })
 }
+

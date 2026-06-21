@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { CATEGORIAS } from '../utils/constantes.js'
+import { useState, useRef, useEffect } from 'react'
+import { MoreVertical, Edit, Trash2, Video, ArrowRight } from 'lucide-react'
 
 export default function TarjetasCanciones({
   canciones,
@@ -7,16 +7,36 @@ export default function TarjetasCanciones({
   onEditar,
   onEliminar,
   onIncrementarTocada,
+  onVerDetalle,
 }) {
-  const [filtroCategoria, setFiltroCategoria] = useState('')
   const [confirmandoEliminar, setConfirmandoEliminar] = useState(null)
+  const [menuAbiertoId, setMenuAbiertoId] = useState(null)
+  const menuRef = useRef(null)
 
-  const cancionesFiltradas = filtroCategoria
-    ? canciones.filter((c) => c.categoriaLiturgica === filtroCategoria)
-    : canciones
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuAbiertoId(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  function toggleMenu(e, id) {
+    e.stopPropagation()
+    if (menuAbiertoId === id) {
+      setMenuAbiertoId(null)
+    } else {
+      setMenuAbiertoId(id)
+    }
+  }
 
   function manejarEliminar(id) {
     setConfirmandoEliminar(id)
+    setMenuAbiertoId(null)
   }
 
   function confirmarEliminar() {
@@ -50,82 +70,93 @@ export default function TarjetasCanciones({
 
   return (
     <div>
-      <div className="filtros">
-        <label htmlFor="filtro-categoria">Filtrar por categoría:</label>
-        <select
-          id="filtro-categoria"
-          value={filtroCategoria}
-          onChange={(e) => setFiltroCategoria(e.target.value)}
-        >
-          <option value="">Todas</option>
-          {CATEGORIAS.map((cat) => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
-      </div>
-
-      {cancionesFiltradas.length === 0 ? (
-        <div className="vacio-contenedor">
-          <p>No hay canciones en la categoría "{filtroCategoria}".</p>
-        </div>
-      ) : (
-        <div className="tarjetas-grid">
-          {cancionesFiltradas.map((cancion) => (
-            <div key={cancion.id} className="tarjeta">
-              <div className="tarjeta-header">
+      <div className="tarjetas-grid">
+        {canciones.map((cancion) => (
+          <div key={cancion.id} className="tarjeta">
+            <div className="tarjeta-header">
+              <div className="tarjeta-info">
                 <h3 className="tarjeta-titulo">{cancion.titulo}</h3>
-                <span className={`tarjeta-categoria tarjeta-categoria--${cancion.categoriaLiturgica?.toLowerCase()}`}>
-                  {cancion.categoriaLiturgica}
-                </span>
+                <p className="tarjeta-autor">{cancion.autor || 'Autor Desconocido'}</p>
+
+                <div style={{display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem', flexWrap: 'wrap'}}>
+                  {cancion.categoriaLiturgica && (
+                    <span className={`tarjeta-categoria tarjeta-categoria--${cancion.categoriaLiturgica.toLowerCase()}`}>
+                      {cancion.categoriaLiturgica}
+                    </span>
+                  )}
+                  <div className="tarjeta-contador">
+                    <span className="contador-numero">{cancion.vecesTocada || 0}</span>
+                    <span className="contador-etiqueta">veces tocada</span>
+                    <button
+                      type="button"
+                      className="btn-contador"
+                      onClick={(e) => { e.stopPropagation(); onIncrementarTocada(cancion.id) }}
+                      title="Marcar como tocada"
+                    >
+                      +1
+                    </button>
+                  </div>
+                </div>
               </div>
-              <p className="tarjeta-autor">{cancion.autor}</p>
 
-              <div className="tarjeta-contador">
-                <span className="contador-numero">{cancion.vecesTocada}</span>
-                <span className="contador-etiqueta">
-                  {cancion.vecesTocada === 1 ? 'vez tocada' : 'veces tocada'}
-                </span>
+              <div style={{ position: 'relative' }} ref={menuAbiertoId === cancion.id ? menuRef : null}>
                 <button
-                  type="button"
-                  className="btn-contador"
-                  onClick={() => onIncrementarTocada(cancion.id)}
-                  title="Marcar como tocada"
+                  className="tarjeta-menu-btn"
+                  onClick={(e) => toggleMenu(e, cancion.id)}
                 >
-                  +1
+                  <MoreVertical size={20} />
                 </button>
-              </div>
 
-              {cancion.enlaceYoutube && (
-                <a
-                  href={cancion.enlaceYoutube}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="tarjeta-enlace"
-                >
-                  Ver en YouTube
-                </a>
-              )}
-
-              <div className="tarjeta-acciones">
-                <button
-                  type="button"
-                  className="btn-editar"
-                  onClick={() => onEditar(cancion)}
-                >
-                  Editar
-                </button>
-                <button
-                  type="button"
-                  className="btn-eliminar"
-                  onClick={() => manejarEliminar(cancion.id)}
-                >
-                  Eliminar
-                </button>
+                {menuAbiertoId === cancion.id && (
+                  <div className="dropdown-menu">
+                    <button
+                      className="dropdown-item"
+                      onClick={() => {
+                        onEditar(cancion)
+                        setMenuAbiertoId(null)
+                      }}
+                    >
+                      <Edit size={16} /> Editar
+                    </button>
+                    {cancion.enlaceYoutube && (
+                      <button
+                        className="dropdown-item"
+                        onClick={() => window.open(cancion.enlaceYoutube, '_blank')}
+                      >
+                        <Video size={16} /> YouTube
+                      </button>
+                    )}
+                    <button
+                      className="dropdown-item danger"
+                      onClick={() => manejarEliminar(cancion.id)}
+                    >
+                      <Trash2 size={16} /> Eliminar
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-          ))}
-        </div>
-      )}
+
+            <div className="tarjeta-divider" />
+
+            <div className="tarjeta-tags">
+              {cancion.tonalidad && (
+                <span className="tag tag-tonalidad">{cancion.tonalidad}</span>
+              )}
+              {cancion.bpm && (
+                <span className="tag tag-bpm">{cancion.bpm} BPM</span>
+              )}
+            </div>
+
+            <div
+              className="tarjeta-footer-arrow"
+              onClick={() => onVerDetalle && onVerDetalle(cancion)}
+            >
+              <ArrowRight size={20} />
+            </div>
+          </div>
+        ))}
+      </div>
 
       {confirmandoEliminar && (
         <div className="modal-overlay" onClick={cancelarEliminar}>

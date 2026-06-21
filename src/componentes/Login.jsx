@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth.js'
+import logoSidebar from '../assets/images/logo.jpg'
 
 export default function Login() {
-  const { iniciarSesion } = useAuth()
+  const { iniciarSesion, errorAcceso } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -36,8 +37,10 @@ export default function Login() {
   return (
     <div className="login-contenedor">
       <form className="login-formulario" onSubmit={manejarEnvio}>
+        <img src={logoSidebar} alt="Logo Av El Paraíso" className="login-logo" />
         <h1>Av El Paraíso</h1>
         <p className="login-subtitulo">Banco Musical</p>
+        {errorAcceso && <div className="login-error">{errorAcceso}</div>}
         {error && <div className="login-error">{error}</div>}
         <label htmlFor="email">Correo electrónico</label>
         <input

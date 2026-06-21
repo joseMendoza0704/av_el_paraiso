@@ -8,6 +8,8 @@ const ESTADO_INICIAL = {
   autor: '',
   enlaceYoutube: '',
   categoriaLiturgica: '',
+  tonalidad: '',
+  bpm: '',
 }
 
 export default function ModalCancion({
@@ -23,6 +25,8 @@ export default function ModalCancion({
           autor: cancionExistente.autor || '',
           enlaceYoutube: cancionExistente.enlaceYoutube || '',
           categoriaLiturgica: cancionExistente.categoriaLiturgica || '',
+          tonalidad: cancionExistente.tonalidad || '',
+          bpm: cancionExistente.bpm || '',
         }
       : { ...ESTADO_INICIAL }
   )
@@ -93,6 +97,8 @@ export default function ModalCancion({
       autor: formulario.autor,
       enlaceYoutube: formulario.enlaceYoutube,
       categoriaLiturgica: formulario.categoriaLiturgica,
+      tonalidad: formulario.tonalidad,
+      bpm: formulario.bpm,
     }
 
     await onGuardar(datosGuardar, archivosNuevos, archivosAEliminar)
@@ -175,6 +181,30 @@ export default function ModalCancion({
                   <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
+            </div>
+            <div className="campo">
+              <label htmlFor="tonalidad">Tonalidad</label>
+              <input
+                id="tonalidad"
+                name="tonalidad"
+                type="text"
+                value={formulario.tonalidad}
+                onChange={manejarCambio}
+                placeholder="Ej. G MAJOR"
+                disabled={guardando}
+              />
+            </div>
+            <div className="campo">
+              <label htmlFor="bpm">BPM</label>
+              <input
+                id="bpm"
+                name="bpm"
+                type="number"
+                value={formulario.bpm}
+                onChange={manejarCambio}
+                placeholder="Ej. 72"
+                disabled={guardando}
+              />
             </div>
           </fieldset>
 
